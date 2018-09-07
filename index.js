@@ -6,6 +6,14 @@ var bodyParser = require('body-parser');
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
+const myInterceptor = axios.interceptors.response.use(function(response){
+  return response;
+}, function(error){
+  return error;
+});
+
+//axios.interceptors.response.eject(myInterceptor);
+
 app.get('/crypto/:country/:currency', function (req, res) {
     //res.send('Hello World ' + req.params.country + " - " + req.params.currency);
     //getIndianBitcoinData(res);
@@ -43,6 +51,16 @@ app.get('/crypto/:country/:currency', function (req, res) {
             break;
         }
         break;
+      case 'won': 
+        console.log("Fetching WON");
+        getKoreanData(res, req.params.currency);
+        
+      break;
+      case 'usd': 
+        console.log("Fetching usd");
+        getAmericanData(res, req.params.currency);
+        
+      break;
         default: res.send('Hello World ' + req.params.country + " - " + req.params.currency);
 
     }
@@ -58,90 +76,56 @@ app.get('/crypto/:country/:currency', function (req, res) {
  });
 
  var indian_bitcoin = [];
+ var korean_bitcoin = [];
+ var american_bitcoin = [];
 
-/* function getIndianBitcoinData(res){
-    var apis = [
-        "https://www.zebapi.com/api/v1/market/ticker-new/btc/inr",
-        "https://coindelta.com/api/v1/public/getticker/",
-        "https://koinex.in/api/ticker",
-        "https://www.buyucoin.com/api/v1.2/currency/btc"
-    ];
 
-    console.log(new Date());
-    axios.all([
-        axios.get(apis[0]),
-        axios.get(apis[1]),
-        axios.get(apis[2]),
-        axios.get(apis[3])
-      ]).then(axios.spread((response1, response2, response3, response4) => {
-        indian_bitcoin = [];
-        indian_bitcoin.push({"exchange" : "Zebpay", "currency": response1.data.currency,"buy":response1.data.buy,"sell":response1.data.sell});
-        indian_bitcoin.push({"exchange" : "Coindelta", "currency": "inr","buy":response2.data[0].Ask+"","sell":response2.data[0].Bid+""});
-        indian_bitcoin.push({"exchange" : "Koinex", "currency": "inr","buy":response3.data.stats.inr.BTC.lowest_ask,"sell":response3.data.stats.inr.BTC.highest_bid});
-        indian_bitcoin.push({"exchange" : "Buyucoin", "currency": "inr","buy":response4.data.data.ask+"","sell":response4.data.data.bid+""});
-        //console.log(new Date());
-        res.send(indian_bitcoin);
-      })).catch(error => {
-        //console.log(error);
-      });
-
-}
-
-function getIndianEthereumData(res){
+ function getKoreanData(res, commodity){
   var apis = [
-      "https://www.zebapi.com/api/v1/market/ticker-new/eth/inr",
-      "https://coindelta.com/api/v1/public/getticker/",
-      "https://koinex.in/api/ticker",
-      "https://www.buyucoin.com/api/v1.2/currency/eth"
-  ];
-
-  console.log(new Date());
-  axios.all([
-      axios.get(apis[0]),
-      axios.get(apis[1]),
-      axios.get(apis[2]),
-      axios.get(apis[3])
-    ]).then(axios.spread((response1, response2, response3, response4) => {
-      indian_bitcoin = [];
-      indian_bitcoin.push({"exchange" : "Zebpay", "currency": response1.data.currency,"buy":response1.data.buy,"sell":response1.data.sell});
-      indian_bitcoin.push({"exchange" : "Coindelta", "currency": "inr","buy":response2.data[1].Ask+"","sell":response2.data[1].Bid+""});
-      indian_bitcoin.push({"exchange" : "Koinex", "currency": "inr","buy":response3.data.stats.inr.ETH.lowest_ask,"sell":response3.data.stats.inr.ETH.highest_bid});
-      indian_bitcoin.push({"exchange" : "Buyucoin", "currency": "inr","buy":response4.data.data.ask+"","sell":response4.data.data.bid+""});
-      //console.log(new Date());
-      res.send(indian_bitcoin);
-    })).catch(error => {
-      //console.log(error);
-    });
-
-}
-
-function getIndianRippleData(res){
-  var apis = [
-      "https://www.zebapi.com/api/v1/market/ticker-new/xrp/inr",
-      "https://coindelta.com/api/v1/public/getticker/",
-      "https://koinex.in/api/ticker",
-      "https://www.buyucoin.com/api/v1.2/currency/xrp"
+      'https://api.bithumb.com/public/ticker/'+commodity,
+      'https://api.korbit.co.kr/v1/ticker/detailed?currency_pair='+commodity+'_krw'
   ];
 
   //console.log(new Date());
   axios.all([
       axios.get(apis[0]),
-      axios.get(apis[1]),
-      axios.get(apis[2]),
-      axios.get(apis[3])
-    ]).then(axios.spread((response1, response2, response3, response4) => {
-      indian_bitcoin = [];
-      indian_bitcoin.push({"exchange" : "Zebpay", "currency": response1.data.currency,"buy":response1.data.buy,"sell":response1.data.sell});
-      indian_bitcoin.push({"exchange" : "Coindelta", "currency": "inr","buy":response2.data[2].Ask+"","sell":response2.data[2].Bid+""});
-      indian_bitcoin.push({"exchange" : "Koinex", "currency": "inr","buy":response3.data.stats.inr.XRP.lowest_ask,"sell":response3.data.stats.inr.XRP.highest_bid});
-      indian_bitcoin.push({"exchange" : "Buyucoin", "currency": "inr","buy":response4.data.data.ask+"","sell":response4.data.data.bid+""});
-      //console.log(new Date());
-      res.send(indian_bitcoin);
+      axios.get(apis[1])
+    ]).then(axios.spread((response1, response2) => {
+      console.log("Didn't got called");
+      korean_bitcoin = [];
+      korean_bitcoin.push({"exchange" : "BitThumb", "currency": "₩(KRW)","buy":response1.data.data.buy_price,"sell":response1.data.data.sell_price});
+      if(commodity!='trx' && commodity!='eos'){
+        korean_bitcoin.push({"exchange" : "Korbit", "currency": "₩(KRW)","buy":response2.data.ask,"sell":response2.data.bid});
+        //console.log(response2);
+      }
+      //console.log(response1.data);
+      res.send(korean_bitcoin);
     })).catch(error => {
       //console.log(error);
+      res.send(korean_bitcoin);
     });
 
-} */
+}
+
+function getAmericanData(res, commodity){
+  var apis = [
+      'https://api.bitfinex.com/v2/tickers?symbols=t'+commodity.toUpperCase()+'USD'
+  ];
+
+  //console.log(new Date());
+  axios.all([
+      axios.get(apis[0])
+    ]).then(axios.spread((response1) => {
+      american_bitcoin = [];
+      american_bitcoin.push({"exchange" : "Bitfinex", "currency": "USD","buy":response1.data[0][3],"sell":response1.data[0][1]});
+      console.log(response1.data[0]);
+      res.send(american_bitcoin);
+    })).catch(error => {
+      console.log(error);
+    });
+
+}
+
 
 function getIndianData(res, commodity, index){
   var apis = [
